@@ -117,3 +117,33 @@ Here’s a diagram summarizing the state of our Kubernetes cluster:
 
 ### Roll out an upgrade to website
 Kubernetes is here to help deploy a new version to production without impacting your users.
+
+First, let’s modify the application.
+```
+response.end('Hello Kubernetes World!');
+```
+Build and publish a new container image to the registry with an incremented tag.
+```
+$ docker build -t gcr.io/$PROJECT_ID/hello-node:v2 .
+$ gcloud docker push gcr.io/$PROJECT_ID/hello-node:v2
+```
+Kubernetes to smoothly update our deployment to the new version of the application.
+Need to edit the existing <b>hello-node deployment</b> and change the image from gcr.io/$PROJECT_ID/hello-node:v1 to gcr.io/$PROJECT_ID/hello-node:v2
+```
+$ kubectl set image deployment/hello-node hello-node=gcr.io/$PROJECT_ID/hello-node:v2
+```
+
+### Cleaning it Up
+```
+Delete the Deployment (which also deletes the running pods) and Service (which also deletes external load balancer):
+$ kubectl delete service,deployment hello-node
+
+Delete cluster:
+$ gcloud container clusters delete hello-world
+
+To list the images created:
+$ gsutil ls
+
+And then to remove the all the images under this path, run:
+$ gsutil rm -r gs://artifacts.$PROJECT_ID.appspot.com/
+```
