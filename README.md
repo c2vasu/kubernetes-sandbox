@@ -45,10 +45,11 @@ Tagging the image with the Google Container Registry repo for your $PROJECT_ID
 $ docker build -t gcr.io/$PROJECT_ID/hello-node:v1 .
 $ docker run -d -p 8081:8081 --name hello_tutorial gcr.io/$PROJECT_ID/hello-node:v1
 $ curl "http://$(docker-machine ip YOUR-VM-MACHINE-NAME):8081"
-# curl http://localhost:8081
-# You can list the docker containers with:
+
+You can list the docker containers with:
 $ docker ps
-# Now stop the running container with
+
+Now stop the running container with
 $ docker stop hello_tutorial
 ```
 Now that the image works as intended and is all tagged with your $PROJECT_ID, we can push it to the Google Container Registry, a private repository for your Docker images accessible from every Google Cloud project (but also from outside Google Cloud Platform) :
