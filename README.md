@@ -47,4 +47,73 @@ Tagging the image with the Google Container Registry repo for your $PROJECT_ID
 $ docker build -t gcr.io/$PROJECT_ID/hello-node:v1 .
 $ docker run -d -p 8081:8081 --name hello_tutorial gcr.io/$PROJECT_ID/hello-node:v1
 $ curl "http://$(docker-machine ip YOUR-VM-MACHINE-NAME):8081"
+# curl http://localhost:8081
+# You can list the docker containers with:
+$ docker ps
+# Now stop the running container with
+$ docker stop hello_tutorial
 ```
+Now that the image works as intended and is all tagged with your $PROJECT_ID, we can push it to the Google Container Registry, a private repository for your Docker images accessible from every Google Cloud project (but also from outside Google Cloud Platform) :
+```
+$ gcloud docker push gcr.io/$PROJECT_ID/hello-node:v1
+```
+### Create Kubernetes Cluster
+A cluster consists of a Master API server and a set of worker VMs called Nodes.
+```
+First, choose a Google Cloud Project zone to run service.
+$ gcloud config set compute/zone us-central1-a
+
+Create a cluster via the gcloud
+$ gcloud container clusters create hello-world
+
+Now deploy containerized application to the Kubernetes cluster.
+$ gcloud container clusters get-credentials hello-world
+```
+### Create and manage pod
+```
+Create a Pod with the kubectl run command:
+$ kubectl run hello-node --image=gcr.io/$PROJECT_ID/hello-node:v1 --port=8081
+
+To view the Deployment we just created run:
+$ kubectl get deployments
+# NAME         DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+# hello-node   1         1         1            1           3m
+
+To view the Pod created by the deployment run:
+$ kubectl get pods
+# NAME                         READY     STATUS             RESTARTS   AGE
+# hello-node-478395812-fgi0v   0/1       ImagePullBackOff   0          3m
+
+To view the stdout / stderr from a Pod run (probably empty currently):
+$ kubectl logs <POD-NAME>
+
+To view metadata about the cluster run:
+$ kubectl cluster-info
+
+To view cluster events run:
+$ kubectl get events
+
+To view the kubectl configuration run:
+$ kubectl config view
+```
+### Allow external traffic
+The pod to make it accessible outside Kubernetes cluster as Kubernetes Service.
+The Kubernetes master creates the load balancer and related Compute Engine forwarding rules, target pools, and firewall rules to make the service fully accessible from outside of Google Cloud Platform.
+```
+$ kubectl expose deployment hello-node --type="LoadBalancer"
+```
+To find the ip addresses associated with the service run:
+```
+$ kubectl get services hello-node
+# Note there are 2 IP addresses listed, both serving port 8080. CLUSTER_IP is only visible inside your cloud virtual network. EXTERNAL_IP is externally accessible.
+```
+### Scale up website
+Deployment to manage a new number of replicas for pod
+```
+$ kubectl scale deployment hello-node --replicas=4
+```
+Here’s a diagram summarizing the state of our Kubernetes cluster:
+![alt tag](http://kubernetes.io/images/hellonode/image_13.png)
+
+### Roll out an upgrade to website
+Kubernetes is here to help deploy a new version to production without impacting your users.
